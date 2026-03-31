@@ -1,26 +1,39 @@
-# SGIO Core — Optimization Formulation
+# sgio/core — SGIO Library
 
-This module implements the SGIO optimization formulation: the augmented item space construction, similarity-discounted objective, MGIL tradeoff path, item-level swap extraction, and multi-observation extension.
+The core optimization library. Importable as `smgil` after `pip install -e .`.
 
-## Files to add here
+## Modules
 
+| File | Description |
+|------|-------------|
+| `solver.py` | S-MGIL quadratic optimizer — wraps Gurobi to solve the similarity-weighted IO problem |
+| `constraints.py` | DASH constraint matrix builder — constructs `A`, `b` from USDA nutrient values |
+| `tradeoff.py` | Tradeoff path runner — iterates the solver, tightening one DASH constraint per step; also `tune_weights()` |
+| `preprocessing.py` | NHANES crosswalk builder and observation vector (`x_vector`, `W_S`) constructor |
+| `config.py` | Gurobi environment setup from env vars; nutrient name constants |
+| `validation.py` | Day-2 holdout projection, nutrient/food-space distance metrics, Wilcoxon test helpers |
+| `plotting.py` | 6-panel validation figure generator |
+| `reporting.py` | Diet summary tables, LaTeX table export |
+| `mfp_preprocessing.py` | MFP-specific preprocessing (serving-space formulation) |
+| `a4f_preprocessing.py` | AI4FoodDB preprocessing (experimental) |
+| `__init__.py` | Public API exports |
+
+## Key functions
+
+```python
+# Build NHANES crosswalk (FNDDS food codes → USDA FoodData Central)
+build_crosswalk(fndds_xpt_path, usda_parquet_path)
+
+# Build observation vector and similarity weight matrix
+build_observation_vector(nhanes_csv, similarity_json, respondent_id, crosswalk)
+
+# Build DASH constraint matrix
+build_A_b(nutrient_csv, item_index, crosswalk, x_vector)
+
+# Run SGIO tradeoff path (up to max_iterations constraint activations)
+run_smgil_tradeoff(A, b, X_obs, W_S, item_index, meta, max_iterations=4)
+
+# Day-2 holdout validation
+project_holdout(day2_csv, item_index, crosswalk)
+compute_distances(z_recommendations, x_holdout, W_S)
 ```
-sgio/core/
-├── README.md                   (this file)
-├── augmented_space.py          Build F_aug = F_obs ∪ top-K neighbors per consumed item
-├── similarity_weights.py       Construct W_S weight matrix (1 - S_{f_i(j), j} per neighbor)
-├── sgio_formulation.py         Main SGIO optimization (MGIL + similarity-discounted objective)
-├── sgio_multi_obs.py           Multi-observation SGIO (shared binary variables across K days)
-├── swap_extraction.py          Extract item-level swap sequences from tradeoff path {z_ℓ}
-├── dash_constraints.py         DASH feasibility constraint builder (Az ≤ b)
-└── utils.py                    Shared helpers (nutrient vectors, cost computation)
-```
-
-## Key formulation reference
-
-See Section IV of the paper (`paper/main.tex`) for the full mathematical formulation.
-
-- **Augmented item space:** $\mathcal{F}_\text{aug} = \mathcal{F}_\text{obs} \cup \bigcup_i \mathcal{N}_K(f_i)$
-- **Similarity-discounted objective:** weight matrix $W_S$ where neighbor $j$ of item $i$ has weight $1 - S_{f_i, j}$
-- **SGIO formulation:** MGIL with $W_S$ and $\mathcal{F}_\text{aug}$ as decision space
-- **Multi-observation:** shared binary indicator variables $v$ across $K$ days

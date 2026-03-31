@@ -1,0 +1,25 @@
+\begin{table}[t]
+\caption{SGIO MyFitnessPal Temporal-Split Validation Results ($N=200$)}
+\label{tab:mfp_results}
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{\textbf{Nutrient Distance}}
+ & \multicolumn{2}{c}{\textbf{Food Distance (srv)}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & Median & \%\,below$^{\dagger}$ & Median & \%\,below$^{\dagger}$ \\
+\midrule
+Natural (train$\to$test) & 3.092 & --- & 1.195 & --- \\
+\midrule
+$r{=}1$ ($n{=}200$) & 1.637$^{***}$ & 92\% & 0.643$^{***}$ & 91\% \\
+$r{=}2$ ($n{=}200$) & 1.637$^{***}$ & 92\% & 0.643$^{***}$ & 91\% \\
+$r{=}3$ ($n{=}200$) & 1.65$^{***}$ & 92\% & 0.645$^{***}$ & 91\% \\
+$r{=}4$ ($n{=}200$) & 1.651$^{***}$ & 92\% & 0.647$^{***}$ & 91\% \\
+\bottomrule
+\multicolumn{5}{l}{%
+  \footnotesize $^{\dagger}$\% users below cohort natural median.}\\
+\multicolumn{5}{l}{%
+  \footnotesize $^{***}p{<}0.001$; one-sided Wilcoxon signed-rank test.}
+\end{tabular}
+\end{center}
+\end{table}

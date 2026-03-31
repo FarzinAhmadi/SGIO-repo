@@ -1,44 +1,49 @@
-# NHANES Analysis Pipeline
+# sgio/nhanes — NHANES 2017–2018 Pipeline
 
-Implements the NHANES 2017–2018 validation described in Section V-A of the paper.
+Scripts for the NHANES validation described in Section V-A of the paper.
 
-## Files to add here
+## Files
+
+| File | Description |
+|------|-------------|
+| `nhanes_to_smgil.py` | Main pipeline: loads NHANES XPT files, applies inclusion criteria, builds `x_vector` and `W_S` per participant, runs SGIO |
+| `build_Ab.py` | Constructs the DASH constraint matrix `A` and bounds vector `b` from USDA nutrient data |
+| `build_nutrient_matrix.py` | Builds the full nutrient matrix from USDA FoodData Central processed CSV |
+
+End-to-end experiment scripts are in `experiments/` at the repo root.
+
+## Data layout expected
 
 ```
-sgio/nhanes/
-├── README.md                   (this file)
-├── config.yaml                 Hyperparameters (K=10, τ=100, r_max=4, age range 18-75)
-├── preprocess.py               Load NHANES XPT files, apply inclusion criteria, build nutrient vectors
-├── crosswalk.py                Map DR1IFDCD food codes → USDA FoodData Central items
-├── run_validation.py           Main entry point: run SGIO on all participants, produce results
-├── benchmark.py                Day-2 natural distance benchmark
-├── statistical_tests.py        One-sided Wilcoxon signed-rank tests (nutrient + food space)
-└── outputs/                    (gitignored) Per-participant recommendation outputs
-```
-
-## Reproducing the paper results
-
-```bash
-python sgio/nhanes/run_validation.py \
-    --nhanes-dir data/nhanes/ \
-    --similarity-matrix usda_similarity_matrix.npz \
-    --config sgio/nhanes/config.yaml \
-    --output results/nhanes_results.pkl
+data/
+  nhanes/2017/
+    rawdata/
+      DRXFCD_J.xpt        FNDDS food code descriptions
+    cleaned/
+      day1_interview.csv   Day 1 dietary recall
+      day2_interview.csv   Day 2 dietary recall (holdout)
+  similarity/
+    usda.npz              Precomputed similarity matrix (release asset)
+    usda_index.parquet    USDA food index
+  crosswalks/
+    nhanes_categoricals_manual.json
+    nhanes_selected_cols.json
+  usda/2017-2018/processed/
+    nutrient_values.csv
 ```
 
 ## Key parameters (from paper)
 
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `K` | 10 | Top-K similar neighbors per consumed item |
-| `τ` | 100 | Non-amenability threshold (g² in weighted objective) |
-| `r_max` | 4 | Maximum constraint activation iterations |
-| Age range | 18–75 | Participant inclusion |
-| Reliability | DR1DRSTZ=1, DR2DRSTZ=1 | Both recall days reliable |
+| Parameter | Value |
+|-----------|-------|
+| `K` | 10 neighbors per food item |
+| `τ` | 100 g² (non-amenability threshold) |
+| `r_max` | 4 constraint activation iterations |
+| Age range | 18–75 |
+| Reliability filter | `DR1DRSTZ=1`, `DR2DRSTZ=1` |
 
 ## Expected outputs
 
-- n=356 participants after inclusion criteria
-- 11 non-amenable (3%), 345 amenable
-- 330 receive full 4-iteration tradeoff path
+- 356 participants after inclusion; 11 non-amenable (3%), 345 amenable
+- 330 participants receive full 4-iteration tradeoff path
 - Wilcoxon p < 0.001 at all r ∈ {1,2,3,4} in both nutrient and food-item space

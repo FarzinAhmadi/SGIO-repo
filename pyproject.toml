@@ -1,0 +1,25 @@
+[project]
+name = "smgil"
+version = "0.1.0"
+description = "Similarity-Guided Inverse Optimization (SGIO) for personalized DASH-compliant dietary recommendations"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "pandas",
+    "gurobipy",
+    "scipy",
+    "matplotlib",
+    "pyreadstat",
+    "pyarrow",
+    "tqdm>=4.67.3",
+]
+
+[project.optional-dependencies]
+dev = ["ipykernel", "jupyter"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sgio/core"]

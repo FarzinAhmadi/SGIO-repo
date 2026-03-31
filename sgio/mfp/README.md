@@ -1,52 +1,46 @@
-# MyFitnessPal Analysis Pipeline
+# sgio/mfp — MyFitnessPal Pipeline
 
-Implements the MFP temporal-split holdout validation described in Section V-B of the paper.
+Scripts for the MFP temporal-split holdout validation described in Section V-B of the paper.
 
-## Files to add here
+## Files
+
+| File | Description |
+|------|-------------|
+| `myfitnesspal.py` | MFP data loader: reads Kaggle TSV, applies inclusion criteria, builds per-user daily aggregates |
+| `nhanes.py` | Shared NHANES data utilities reused in MFP pipeline |
+| `usda.py` | USDA nutrient data utilities |
+| `mfp_preprocessing.py` | MFP-specific preprocessing — serving-space formulation, temporal split, MFP→USDA crosswalk |
+| `mfp_single_user.py` | Single MFP user demo |
+| `mfp_cohort_validation.py` | Full MFP cohort validation (n=200) |
+| `mfp_multi_obs_single_user.py` | Multi-observation SGIO demo on a single MFP user |
+
+## Data layout expected
 
 ```
-sgio/mfp/
-├── README.md                   (this file)
-├── config.yaml                 Hyperparameters (K=10, τ=100, caloric range 800-5000 kcal)
-├── preprocess.py               Load MFP Kaggle dataset, apply inclusion criteria, aggregate daily logs
-├── crosswalk.py                Map MFP food names → USDA FoodData Central items (fuzzy + embedding match)
-├── temporal_split.py           80/20 temporal split: first 80% of days as input, last 20% as holdout
-├── run_validation.py           Main entry point: run SGIO on all MFP users, produce results
-├── benchmark.py                Temporal holdout natural distance benchmark
-├── statistical_tests.py        One-sided Wilcoxon signed-rank tests
-└── outputs/                    (gitignored) Per-user recommendation outputs
+data/
+  myfitnesspal/
+    rawdata/
+      mfp-diaries.tsv       Raw MFP food diary (from Kaggle)
+    processed/
+      myfitnesspal_foods.csv
+      myfitnesspal_users.csv
+  similarity/
+    myfitnesspal_to_usda.json   MFP food name → USDA item crosswalk
+    usda.npz                    Precomputed similarity matrix (release asset)
+    usda_index.parquet
+  usda/2017-2018/processed/
+    nutrient_values_full.csv
 ```
 
-## Reproducing the paper results
+## Key differences from the NHANES pipeline
 
-```bash
-python sgio/mfp/run_validation.py \
-    --mfp-dir data/mfp/ \
-    --similarity-matrix usda_similarity_matrix.npz \
-    --config sgio/mfp/config.yaml \
-    --output results/mfp_results.pkl
-```
-
-## Key parameters (from paper)
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| `K` | 10 | Top-K similar neighbors per consumed item |
-| `τ` | 100 | Non-amenability threshold |
-| Min logged days | 10 | Minimum days to include a user |
-| Caloric range | 800–5,000 kcal | Mean daily intake filter |
-| Temporal split | 80/20 | Training / holdout fraction |
-
-## Key differences from NHANES formulation
-
-- Decision space is in **servings** (one MFP log entry = one serving), not grams
+- Decision space is in **servings** (one MFP log entry = one serving)
 - Augmented item space is larger (~1,700 items vs. ~135 for NHANES)
-- Magnesium excluded from DASH constraints (0% MFP coverage)
+- Magnesium excluded from DASH constraints (0% MFP nutrient coverage)
 - Multi-observation formulation is the natural treatment (K ≫ 10 days per user)
 
 ## Expected outputs
 
-- n=200 users
-- 0 non-amenable (0%)
+- 200 users; 0 non-amenable (0%)
 - Marginal costs ≈ 0 across all iterations (flat tradeoff path)
 - 47% median nutrient distance reduction (W=153, p < 0.001)

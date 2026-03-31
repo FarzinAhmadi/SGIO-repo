@@ -1,0 +1,244 @@
+{
+	"gender": {
+		"1": "Male",
+		"2": "Female"
+	},
+	"race_or_hispanic_origin_with_nh_asian": {
+		"1": "mexican",
+		"2": "hispanic",
+		"3": "white",
+		"4": "black",
+		"6": "asian",
+		"7": "other"
+	},
+	"education_level_children_or_youth_6_19": {
+		"0": "Never attended / kindergarten only",
+		"1": "1st grade",
+		"2": "2nd grade",
+		"3": "3rd grade",
+		"4": "4th grade",
+		"5": "5th grade",
+		"6": "6th grade",
+		"7": "7th grade",
+		"8": "8th grade",
+		"9": "9th grade",
+		"10": "10th grade",
+		"11": "11th grade",
+		"12": "12th grade, no diploma",
+		"13": "High school graduate",
+		"14": "GED or equivalent",
+		"15": "More than high school",
+		"55": "Less than 5th grade",
+		"66": "Less than 9th grade",
+		"77": null,
+		"99": null
+	},
+	"education_level_adults_20plus": {
+		"1": "Less than 9th grade",
+		"2": "9-11th grade (Includes 12th grade with no diploma)",
+		"3": "High school graduate/GED or equivalent",
+		"4": "Some college or AA degree",
+		"5": "College graduate or above",
+		"7": null,
+		"9": null
+	},
+	"pregnancy_status_at_exam": {
+		"1": true,
+		"2": false,
+		"3": null
+	},
+	"total_number_of_people_in_the_household": {
+		"1": "1",
+		"2": "2",
+		"3": "3",
+		"4": "4",
+		"5": "5",
+		"6": "6",
+		"7": "7+"
+	},
+	"total_number_of_people_in_the_family": {
+		"1": "1",
+		"2": "2",
+		"3": "3",
+		"4": "4",
+		"5": "5",
+		"6": "6",
+		"7": "7+"
+	},
+	"annual_household_income": {
+		"1": "$0 to $4,999",
+		"2": "$5,000 to $9,999",
+		"3": "$10,000 to $14,999",
+		"4": "$15,000 to $19,999",
+		"5": "$20,000 to $24,999",
+		"6": "$25,000 to $34,999",
+		"7": "$35,000 to $44,999",
+		"8": "$45,000 to $54,999",
+		"9": "$55,000 to $64,999",
+		"10": "$65,000 to $74,999",
+		"12": "$20,000 and Over",
+		"13": "Under $20,000",
+		"14": "$75,000 to $99,999",
+		"15": "$100,000 and Over",
+		"77": null,
+		"99": null
+	},
+	"annual_family_income": {
+		"1": "$0 to $4,999",
+		"2": "$5,000 to $9,999",
+		"3": "$10,000 to $14,999",
+		"4": "$15,000 to $19,999",
+		"5": "$20,000 to $24,999",
+		"6": "$25,000 to $34,999",
+		"7": "$35,000 to $44,999",
+		"8": "$45,000 to $54,999",
+		"9": "$55,000 to $64,999",
+		"10": "$65,000 to $74,999",
+		"12": "$20,000 and Over",
+		"13": "Under $20,000",
+		"14": "$75,000 to $99,999",
+		"15": "$100,000 and Over",
+		"77": null,
+		"99": null
+	},
+	"on_special_diet": {
+		"1": true,
+		"2": false,
+		"9": null
+	},
+	"weight_loss_or_low_calorie_diet": {
+		"1": true
+	},
+	"low_fat_or_low_cholesterol_diet": {
+		"2": true
+	},
+	"low_salt_or_low_sodium_diet": {
+		"3": true
+	},
+	"sugar_free_or_low_sugar_diet": {
+		"4": true
+	},
+	"low_fiber_diet": {
+		"5": true
+	},
+	"high_fiber_diet": {
+		"6": true
+	},
+	"diabetic_diet": {
+		"7": true
+	},
+	"weight_gain_or_muscle_building_diet": {
+		"8": true
+	},
+	"low_carbohydrate_diet": {
+		"9": true
+	},
+	"high_protein_diet": {
+		"10": true
+	},
+	"gluten_free_or_celiac_diet": {
+		"11": true
+	},
+	"renal_or_kidney_diet": {
+		"12": true
+	},
+	"other_special_diet": {
+		"91": true
+	},
+	"compare_food_consumed_yesterday_to_usual": {
+		"1": "Much more than usual",
+		"2": "Usual",
+		"3": "Much less than usual",
+		"7": null,
+		"9": null
+	},
+	"how_do_you_consider_your_weight": {
+		"1": "Overweight",
+		"2": "Underweight",
+		"3": "About the right weight",
+		"7": null,
+		"9": null
+	},
+	"like_to_weigh_more_less_or_same": {
+		"1": "More",
+		"2": "Less",
+		"3": "Stay about the same",
+		"7": null,
+		"9": null
+	},
+	"weight_change_intentional": {
+		"1": true,
+		"2": false,
+		"7": null,
+		"9": null
+	},
+	"tried_to_lose_weight_in_past_year": {
+		"1": true,
+		"2": false,
+		"7": null,
+		"9": null
+	},
+	"ate_less_to_lose_weight": {
+		"10": true
+	},
+	"switched_to_foods_with_lower_calories": {
+		"11": true
+	},
+	"ate_less_fat_to_lose_weight": {
+		"12": true
+	},
+	"exercised_to_lose_weight": {
+		"13": true
+	},
+	"skipped_meals": {
+		"14": true
+	},
+	"ate_diet_foods_or_products": {
+		"15": true
+	},
+	"used_a_liquid_diet_formula": {
+		"16": true
+	},
+	"joined_a_weight_loss_program": {
+		"17": true
+	},
+	"took_prescription_diet_pills": {
+		"31": true
+	},
+	"took_non_rx_suppl_to_lose_weight": {
+		"32": true
+	},
+	"took_laxatives_or_vomited": {
+		"33": true
+	},
+	"drank_a_lot_of_water": {
+		"34": true
+	},
+	"followed_a_special_diet": {
+		"30": true
+	},
+	"ate_fewer_carbohydrates": {
+		"41": true
+	},
+	"ate_more_fruits_vegetables_salads": {
+		"43": true
+	},
+	"changed_eating_habits": {
+		"44": true
+	},
+	"ate_less_sugar_candy_sweets": {
+		"45": true
+	},
+	"ate_less_junk_food_or_fast_food": {
+		"46": true
+	},
+	"had_weight_loss_surgery_to_lose_weight": {
+		"35": true
+	},
+	"did_you_eat_this_meal_at_home": {
+		"1": true,
+		"2": false,
+		"7": null,
+		"9": null
+	}
+}
