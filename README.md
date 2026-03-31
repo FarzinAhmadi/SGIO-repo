@@ -80,6 +80,4 @@ Open `results/dashboard.html` in any modern browser.
 ---
 
 ## License
-
-Code: MIT License. See `LICENSE`.
 Data: Subject to NHANES public use data terms and MyFitnessPal dataset terms (see `data/README.md`).
