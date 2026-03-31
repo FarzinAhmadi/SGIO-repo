@@ -3,7 +3,7 @@
 **Paper:** "Similarity-Guided Inverse Optimization for Personalized Dietary Recommendations via Food Swapping"
 **Authors:** Farzin Ahmadi, Felix Parker, Layne C. Price, Raviteja Anantha, Valerie K. Sullivan, Lawrence J. Appel, Kimia Ghobadi
 **Venue:** IEEE Journal of Biomedical and Health Informatics (J-BHI), submitted 2026
-**Preprint:** [arXiv:2603.17033](https://arxiv.org/abs/2603.17033)
+**Preprint:** To be submitted
 
 ---
 
