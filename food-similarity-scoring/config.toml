@@ -1,0 +1,136 @@
+[[sources]]
+name = "off"
+type = "off"
+path = "data/openfoodfacts-products.jsonl.gz"
+name_field = "product_name"
+brand_field = "brands"
+categories_field = "categories_tags"
+min_name_length = 2
+enabled = true
+
+[[sources]]
+name = "usda"
+type = "usda"
+descriptions_path = "data/usda/2017-2018/processed/descriptions.csv"
+nutrients_path = "data/usda/2017-2018/processed/nutrient_values.csv"
+min_name_length = 2
+enabled = true
+
+[[sources]]
+name = "myfitnesspal"
+type = "myfitnesspal"
+path = "data/myfitnesspal/processed/myfitnesspal_foods.csv"
+min_name_length = 2
+enabled = true
+
+[[sources]]
+name = "ai4fooddb"
+type = "ai4fooddb"
+path = "data/ai4fooddb/processed/ai4fooddb_food_index.csv"
+min_name_length = 2
+enabled = true
+
+[index]
+path = "data/index"
+faiss_file = "faiss.index"
+metadata_file = "metadata.parquet"
+macro_stats_file = "macro_stats.json"
+checkpoint_dir = "checkpoints"
+batch_size = 96
+device = "auto"
+
+[scoring.embedding]
+enabled = true
+weight = 1.0
+model = "Qwen/Qwen3-Embedding-0.6B"
+instruction = "Given a food item name, retrieve similar food products"
+top_k = 16
+dimension = 1024
+device = "auto"  # "auto", "cuda", or "cpu"
+
+[scoring.reranker]
+enabled = true
+weight = 1.0
+model = "Qwen/Qwen3-Reranker-0.6B"
+instruction = "Given a food item name, determine if the document describes a similar food product"
+max_length = 512
+batch_size = 8
+device = "auto"  # "auto", "cuda", or "cpu"
+
+[scoring.macronutrient]
+enabled = true
+weight = 0.5
+fields = [
+  "energy_kcal_100g",
+  "fat_100g",
+  "carbohydrates_100g",
+  "proteins_100g",
+  "sugars_100g",
+  "fiber_100g",
+  "salt_100g",
+  "saturated_fat_100g",
+]
+similarity = "scaled_l1"
+
+[scoring.metadata]
+enabled = true
+weight = 0.5
+list_fields = [
+  "categories_tags",
+  "food_groups_tags",
+  "pnns_groups_1_tags",
+  "pnns_groups_2_tags",
+  "labels_tags",
+]
+scalar_fields = [
+  "nutriscore_grade",
+  "nova_group",
+]
+list_similarity = "query_coverage"
+
+[scoring.edit_distance]
+enabled = true
+weight = 0.3
+
+[scoring.llm]
+enabled = false
+weight = 1.0
+backend = "local"
+model = "Qwen/Qwen2.5-1.5B-Instruct"
+max_length = 512
+batch_size = 1
+api_base = ""  # override via LLM_API_BASE env var
+api_key = ""   # override via LLM_API_KEY or OPENAI_API_KEY env var
+device = "auto"  # "auto", "cuda", or "cpu"
+
+[scoring.preference]
+enabled = true
+weight = 0.5
+centroid_weight = 0.4
+category_weight = 0.3
+dietary_weight = 0.3
+
+[scoring.meal_context]
+enabled = true
+weight = 0.4
+nutritional_gap_weight = 0.6
+diversity_weight = 0.4
+default_daily_kcal = 2000.0
+meals_per_day = 3
+
+[search]
+final_top_k = 10
+deduplicate = false
+
+[nhanes]
+enabled = false
+subjects_path = "data/nhanes/2017/processed/subjects.csv"
+foods_path = "data/nhanes/2017/processed/foods.csv"
+
+[memory]
+idle_timeout_seconds = 300   # evict heavy resources after 5 min idle
+check_interval_seconds = 30  # how often to check for idle
+
+[web]
+host = "0.0.0.0"
+port = 9333

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Similarity Browser</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.75rem;
+        }
+        .nav-bar a {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-bar a:hover { background: #eee; color: #333; }
+        .nav-bar a.active { background: #3498db; color: white; }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .controls select, .controls input[type="text"] {
+            padding: 0.6rem 0.8rem;
+            font-size: 0.95rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .controls input[type="text"] { flex: 1; min-width: 200px; }
+        .controls input[type="text"]:focus,
+        .controls select:focus { border-color: #3498db; }
+        .controls button {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .controls button:hover { background: #2980b9; }
+        .btn-clear {
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+            background: #eee;
+            color: #666;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-clear:hover { background: #ddd; color: #333; }
+        .info-bar {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+        .food-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            transition: box-shadow 0.15s;
+        }
+        .food-list-item:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+        .food-list-item a {
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .food-list-item a:hover { color: #3498db; }
+        .food-list-macros {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .macro-pill {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            color: #666;
+            white-space: nowrap;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .pagination a {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            background: white;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: #333;
+            transition: background 0.2s;
+        }
+        .pagination a:hover { background: #eee; }
+        .pagination .disabled {
+            color: #ccc;
+            pointer-events: none;
+            border-color: #eee;
+        }
+        .pagination .page-info { color: #888; }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #3498db;
+            text-decoration: none;
+        }
+        .back-link:hover { text-decoration: underline; }
+        .detail-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .detail-card h2 {
+            font-size: 1.25rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .detail-categories {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+        .macro-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+        }
+        .macro-cell {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 1.5rem 0 0.75rem;
+        }
+        .neighbor-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.6rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0 1rem;
+            align-items: start;
+        }
+        .neighbor-rank {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #bbb;
+            padding-top: 0.1rem;
+            grid-row: 1 / 3;
+        }
+        .neighbor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .neighbor-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.95rem;
+        }
+        .neighbor-name a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .neighbor-name a:hover { color: #3498db; }
+        .neighbor-scores {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .score-badge {
+            background: #f0f0f0;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .score-final {
+            background: #e8f4fd;
+            color: #2980b9;
+            font-weight: 600;
+        }
+        .neighbor-details {
+            grid-column: 2;
+        }
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 3rem;
+            font-size: 1rem;
+        }
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 4rem 1rem;
+        }
+        .empty-state p { margin-bottom: 0.5rem; }
+        .source-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .source-usda { background: #27ae60; color: white; }
+        .source-off { background: #3498db; color: white; }
+        .source-myfitnesspal { background: #8e44ad; color: white; }
+        .source-ai4fooddb { background: #e67e22; color: white; }
+        .reloaded-banner {
+            background: #eef6ff;
+            border: 1px solid #b3d4fc;
+            color: #31587a;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reloaded-banner button {
+            background: none;
+            border: none;
+            color: #31587a;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="/">Search</a>
+            <a href="/similarity" class="active">Similarity</a>
+            <a href="/mapping">Mapping</a>
+            <a href="/personalized">Personalized</a>
+            <a href="/eval">Eval</a>
+        </nav>
+        {% if resources_reloaded %}
+        <div class="reloaded-banner">
+            <span>The server was idle and reloaded its models — this page load was slower than usual.</span>
+            <button onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        </div>
+        {% endif %}
+
+        <h1>Food Similarity Browser</h1>
+
+        {% if not available_sources %}
+        <div class="empty-state">
+            <p>No pre-computed similarity data found.</p>
+            <p>Run <code>scripts/refine_similarity.py</code> to generate similarity data.</p>
+        </div>
+        {% elif selected_food %}
+        {# ---- DETAIL MODE ---- #}
+        <a href="/similarity?source={{ source }}&q={{ query }}&page={{ page }}" class="back-link">&larr; Back to list</a>
+
+        <div class="detail-card">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <h2>{{ selected_food.name }}</h2>
+                <span class="source-badge source-{{ source }}">{{ source | upper }}</span>
+            </div>
+            {% if selected_food.categories %}
+            <div class="detail-categories">{{ selected_food.categories | join(", ") }}</div>
+            {% endif %}
+            {% set ns = namespace(has_macro=false) %}
+            {% for k, v in selected_food.macros.items() %}{% if v is not none %}{% set ns.has_macro = true %}{% endif %}{% endfor %}
+            {% if ns.has_macro %}
+            <div class="macro-grid">
+                {% for k, v in selected_food.macros.items() %}
+                {% if v is not none %}
+                <span class="macro-cell">{{ k | replace("_100g", "") | replace("_", " ") }}: {{ v }}{% if k == "energy_kcal_100g" %} kcal{% else %}g{% endif %}</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section-title">Top {{ selected_food.neighbors | length }} Similar Foods</div>
+
+        {% for nb in selected_food.neighbors %}
+        <div class="neighbor-card">
+            <span class="neighbor-rank">#{{ loop.index }}</span>
+            <div class="neighbor-header">
+                <span class="neighbor-name">
+                    <a href="/similarity?source={{ source }}&food_id={{ nb.food_id }}&q={{ query }}&page={{ page }}">{{ nb.name }}</a>
+                </span>
+                <div class="neighbor-scores">
+                    <span class="score-badge">embedding: {{ nb.original_score }}</span>
+                    <span class="score-badge">reranker: {{ nb.reranker_score }}</span>
+                    <span class="score-badge score-final">final: {{ nb.final_score }}</span>
+                </div>
+            </div>
+            <div class="neighbor-details">
+                {% if nb.categories %}
+                <div class="detail-categories">{{ nb.categories | join(", ") }}</div>
+                {% endif %}
+                {% set nns = namespace(has_macro=false) %}
+                {% for k, v in nb.macros.items() %}{% if v is not none %}{% set nns.has_macro = true %}{% endif %}{% endfor %}
+                {% if nns.has_macro %}
+                <div class="macro-grid">
+                    {% for k, v in nb.macros.items() %}
+                    {% if v is not none %}
+                    <span class="macro-cell">{{ k | replace("_100g", "") | replace("_", " ") }}: {{ v }}{% if k == "energy_kcal_100g" %} kcal{% else %}g{% endif %}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        {# ---- LIST MODE ---- #}
+        <form class="controls" method="get" action="/similarity">
+            <select name="source" onchange="this.form.submit()">
+                {% for s in available_sources %}
+                <option value="{{ s }}" {% if s == source %}selected{% endif %}>{{ s | upper }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" value="{{ query }}" placeholder="Search foods by name...">
+            <button type="submit">Search</button>
+            <a href="/similarity?source={{ source }}" class="btn-clear">Clear</a>
+        </form>
+
+        {% if foods %}
+        <div class="info-bar">
+            Showing {{ (page - 1) * 50 + 1 }}–{{ [(page - 1) * 50 + foods | length, total_count] | min }} of {{ "{:,}".format(total_count) }} foods
+        </div>
+
+        {% for f in foods %}
+        <div class="food-list-item">
+            <a href="/similarity?source={{ source }}&food_id={{ f.food_id }}&q={{ query }}&page={{ page }}">{{ f.name }}</a>
+            <div class="food-list-macros">
+                {% if f.macros.energy_kcal_100g is not none %}
+                <span class="macro-pill">{{ f.macros.energy_kcal_100g }} kcal</span>
+                {% endif %}
+                {% if f.macros.fat_100g is not none %}
+                <span class="macro-pill">F {{ f.macros.fat_100g }}g</span>
+                {% endif %}
+                {% if f.macros.carbohydrates_100g is not none %}
+                <span class="macro-pill">C {{ f.macros.carbohydrates_100g }}g</span>
+                {% endif %}
+                {% if f.macros.proteins_100g is not none %}
+                <span class="macro-pill">P {{ f.macros.proteins_100g }}g</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="/similarity?source={{ source }}&q={{ query }}&page={{ page - 1 }}">Prev</a>
+            {% else %}
+            <a class="disabled">Prev</a>
+            {% endif %}
+            <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+            <a href="/similarity?source={{ source }}&q={{ query }}&page={{ page + 1 }}">Next</a>
+            {% else %}
+            <a class="disabled">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% elif query %}
+        <div class="no-results">No foods found matching "{{ query }}"</div>
+        {% else %}
+        <div class="no-results">Enter a search term or browse all foods.</div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+</body>
+</html>

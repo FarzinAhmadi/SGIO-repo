@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Similarity Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        .search-form {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        .query-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .search-form input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-form input[type="text"]:focus {
+            border-color: #3498db;
+        }
+        .search-form button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-form button:hover {
+            background: #2980b9;
+        }
+        .btn-clear {
+            padding: 0.75rem 1.2rem;
+            font-size: 0.9rem;
+            background: #eee;
+            color: #666;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .btn-clear:hover {
+            background: #ddd;
+            color: #333;
+        }
+        .field-grid {
+            display: grid;
+            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+        .field-grid input, .field-grid select {
+            width: 100%;
+            padding: 0.55rem 0.65rem;
+            font-size: 0.9rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .advanced-block {
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 0.8rem;
+        }
+        .advanced-title {
+            font-size: 0.82rem;
+            color: #6c7a89;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.5rem;
+        }
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .result-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+        }
+        .result-rank {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888;
+        }
+        .result-name {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .result-name a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .result-name a:hover {
+            color: #3498db;
+        }
+        .result-brand {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        .result-badges {
+            margin-top: 0.4rem;
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .nutriscore-a { background: #1e8f4e; color: white; }
+        .nutriscore-b { background: #60ac0e; color: white; }
+        .nutriscore-c { background: #eeae0e; color: #333; }
+        .nutriscore-d { background: #e67e22; color: white; }
+        .nutriscore-e { background: #e74c3c; color: white; }
+        .nova-1 { background: #1e8f4e; color: white; }
+        .nova-2 { background: #eeae0e; color: #333; }
+        .nova-3 { background: #e67e22; color: white; }
+        .nova-4 { background: #e74c3c; color: white; }
+        .macro-grid {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .macro-cell {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            color: #555;
+        }
+        .result-categories {
+            margin-top: 0.4rem;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .result-tags {
+            margin-top: 0.3rem;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .result-tags span {
+            color: #666;
+            font-weight: 500;
+        }
+        .result-scores {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .score-badge {
+            background: #f0f0f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        .final-score {
+            font-weight: 600;
+            background: #e8f4fd;
+            color: #2980b9;
+        }
+        .source-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .source-off { background: #3498db; color: white; }
+        .source-usda { background: #27ae60; color: white; }
+        .source-filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .source-filter-row label {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .weight-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+        .weight-slider-row label {
+            flex: 0 0 110px;
+            font-size: 0.85rem;
+            color: #555;
+            text-transform: capitalize;
+        }
+        .weight-slider-row input[type="range"] {
+            flex: 1;
+            accent-color: #3498db;
+        }
+        .weight-slider-row .weight-value {
+            flex: 0 0 36px;
+            text-align: right;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2c3e50;
+            font-variant-numeric: tabular-nums;
+        }
+        .weight-slider-row .weight-reset {
+            flex: 0 0 auto;
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+        }
+        .weight-slider-row .weight-reset:hover {
+            background: #eee;
+            color: #666;
+        }
+        .no-results {
+            text-align: center;
+            color: #999;
+            padding: 2rem;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.75rem;
+        }
+        .nav-bar a {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-bar a:hover { background: #eee; color: #333; }
+        .nav-bar a.active { background: #3498db; color: white; }
+        .reloaded-banner {
+            background: #eef6ff;
+            border: 1px solid #b3d4fc;
+            color: #31587a;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reloaded-banner button {
+            background: none;
+            border: none;
+            color: #31587a;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="/" class="active">Search</a>
+            <a href="/similarity">Similarity</a>
+            <a href="/mapping">Mapping</a>
+            <a href="/personalized">Personalized</a>
+            <a href="/eval">Eval</a>
+        </nav>
+        {% if resources_reloaded %}
+        <div class="reloaded-banner">
+            <span>The server was idle and reloaded its models — this page load was slower than usual.</span>
+            <button onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        </div>
+        {% endif %}
+        <h1>Food Similarity Search</h1>
+        <form class="search-form" id="search-form" method="get" action="/">
+            <div class="query-row">
+                <input type="text" name="q" value="{{ query }}" placeholder="Enter a food name (e.g. chocolate spread)" autofocus>
+                <button type="submit">Search</button>
+                <a href="/" class="btn-clear">Clear</a>
+            </div>
+
+            <div class="advanced-block">
+                <div class="advanced-title">Macronutrient Targets (per 100g, optional)</div>
+                <div class="field-grid">
+                    <input type="text" name="energy_kcal_100g" placeholder="energy kcal" value="{{ inputs.energy_kcal_100g }}">
+                    <input type="text" name="fat_100g" placeholder="fat g" value="{{ inputs.fat_100g }}">
+                    <input type="text" name="carbohydrates_100g" placeholder="carbs g" value="{{ inputs.carbohydrates_100g }}">
+                    <input type="text" name="proteins_100g" placeholder="protein g" value="{{ inputs.proteins_100g }}">
+                    <input type="text" name="sugars_100g" placeholder="sugars g" value="{{ inputs.sugars_100g }}">
+                    <input type="text" name="fiber_100g" placeholder="fiber g" value="{{ inputs.fiber_100g }}">
+                    <input type="text" name="salt_100g" placeholder="salt g" value="{{ inputs.salt_100g }}">
+                    <input type="text" name="saturated_fat_100g" placeholder="saturated fat g" value="{{ inputs.saturated_fat_100g }}">
+                </div>
+            </div>
+
+            <div class="advanced-block">
+                <div class="advanced-title">Metadata Preferences (optional)</div>
+                <div class="field-grid">
+                    <input type="text" name="categories_tags" list="dl-categories_tags" placeholder="categories (csv)" value="{{ inputs.categories_tags }}">
+                    <datalist id="dl-categories_tags"></datalist>
+                    <input type="text" name="food_groups_tags" list="dl-food_groups_tags" placeholder="food groups (csv)" value="{{ inputs.food_groups_tags }}">
+                    <datalist id="dl-food_groups_tags"></datalist>
+                    <input type="text" name="pnns_groups_1_tags" list="dl-pnns_groups_1_tags" placeholder="pnns groups 1 (csv)" value="{{ inputs.pnns_groups_1_tags }}">
+                    <datalist id="dl-pnns_groups_1_tags"></datalist>
+                    <input type="text" name="pnns_groups_2_tags" list="dl-pnns_groups_2_tags" placeholder="pnns groups 2 (csv)" value="{{ inputs.pnns_groups_2_tags }}">
+                    <datalist id="dl-pnns_groups_2_tags"></datalist>
+                    <input type="text" name="labels_tags" list="dl-labels_tags" placeholder="labels (csv)" value="{{ inputs.labels_tags }}">
+                    <datalist id="dl-labels_tags"></datalist>
+                    <select name="nutriscore_grade">
+                        <option value="">nutriscore grade</option>
+                        {% for grade in ["a", "b", "c", "d", "e"] %}
+                        <option value="{{ grade }}" {% if inputs.nutriscore_grade == grade %}selected{% endif %}>{{ grade | upper }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="nova_group">
+                        <option value="">nova group</option>
+                        {% for group in ["1", "2", "3", "4"] %}
+                        <option value="{{ group }}" {% if inputs.nova_group == group %}selected{% endif %}>{{ group }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if available_sources and available_sources | length > 1 %}
+            <div class="advanced-block">
+                <div class="advanced-title">Source Filter (optional)</div>
+                <div class="source-filter-row">
+                    {% for src in available_sources %}
+                    <label>
+                        <input type="checkbox" name="source" value="{{ src }}"
+                            {% if not inputs.source or src in inputs.source.split(',') %}checked{% endif %}
+                            onchange="updateSourceInput()">
+                        {{ src | upper }}
+                    </label>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="source" id="source-hidden" value="{{ inputs.source }}">
+            </div>
+            {% endif %}
+
+            {% if scorer_defaults %}
+            <div class="advanced-block">
+                <div class="advanced-title">Score Weights</div>
+                {% for scorer_name, default_weight in scorer_defaults.items() %}
+                <div class="weight-slider-row">
+                    <label for="slider_w_{{ scorer_name }}">{{ scorer_name | replace("_", " ") }}</label>
+                    <input type="range"
+                           id="slider_w_{{ scorer_name }}"
+                           min="0" max="2" step="0.1"
+                           value="{{ inputs.get('w_' ~ scorer_name) or default_weight }}"
+                           data-default="{{ default_weight }}"
+                           oninput="syncWeightSlider('{{ scorer_name }}', this.value)">
+                    <span class="weight-value" id="display_w_{{ scorer_name }}">
+                        {{- inputs.get('w_' ~ scorer_name) or default_weight -}}
+                    </span>
+                    <input type="hidden" name="w_{{ scorer_name }}" id="w_{{ scorer_name }}"
+                           value="{{ inputs.get('w_' ~ scorer_name) or default_weight }}">
+                    <button type="button" class="weight-reset"
+                            onclick="resetWeight('{{ scorer_name }}', {{ default_weight }})" title="Reset to default">
+                        reset
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </form>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if results %}
+            {% for r in results %}
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="result-name">
+                        {% if r.source in similarity_sources %}
+                        <a href="/similarity?source={{ r.source }}&food_id={{ r.food_id }}" title="View similar foods">{{ r.product_name }}</a>
+                        {% elif r.source in mapping_targets %}
+                        <a href="/mapping?source={{ r.source }}&target={{ mapping_targets[r.source] }}&food_id={{ r.food_id }}" title="View mapped foods">{{ r.product_name }}</a>
+                        {% else %}
+                        {{ r.product_name }}
+                        {% endif %}
+                    </span>
+                    <span>
+                        {% if r.source %}<span class="source-badge source-{{ r.source }}">{{ r.source | upper }}</span>{% endif %}
+                        <span class="result-rank">#{{ r.rank }}</span>
+                    </span>
+                </div>
+                {% if r.brands %}
+                <div class="result-brand">{{ r.brands }}</div>
+                {% endif %}
+                {% if r.nutriscore_grade or r.nova_group %}
+                <div class="result-badges">
+                    {% if r.nutriscore_grade %}
+                    <span class="badge nutriscore-{{ r.nutriscore_grade }}">Nutriscore {{ r.nutriscore_grade | upper }}</span>
+                    {% endif %}
+                    {% if r.nova_group %}
+                    <span class="badge nova-{{ r.nova_group }}">NOVA {{ r.nova_group }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if r.macros %}
+                {% set ns = namespace(has_macro=false) %}
+                {% for k, v in r.macros.items() %}{% if v is not none %}{% set ns.has_macro = true %}{% endif %}{% endfor %}
+                {% if ns.has_macro %}
+                <div class="macro-grid">
+                    {% for k, v in r.macros.items() %}
+                    {% if v is not none %}
+                    <span class="macro-cell">{{ k | replace("_100g", "") | replace("_", " ") }}: {{ v }}{% if k == "energy_kcal_100g" %} kcal{% else %}g{% endif %}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endif %}
+                {% if r.categories %}
+                <div class="result-categories">{{ r.categories | join(", ") }}</div>
+                {% endif %}
+                {% if r.labels %}
+                <div class="result-tags"><span>Labels:</span> {{ r.labels | join(", ") }}</div>
+                {% endif %}
+                {% if r.food_groups %}
+                <div class="result-tags"><span>Food groups:</span> {{ r.food_groups | join(", ") }}</div>
+                {% endif %}
+                {% if r.pnns_groups_1 %}
+                <div class="result-tags"><span>PNNS 1:</span> {{ r.pnns_groups_1 | join(", ") }}</div>
+                {% endif %}
+                {% if r.pnns_groups_2 %}
+                <div class="result-tags"><span>PNNS 2:</span> {{ r.pnns_groups_2 | join(", ") }}</div>
+                {% endif %}
+                <div class="result-scores">
+                    {% for name, val in r.scores.items() %}
+                    <span class="score-badge">{{ name }}: {{ "%.4f" | format(val) }}</span>
+                    {% endfor %}
+                    <span class="score-badge final-score">final: {{ r.final_score }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% elif query %}
+            <div class="no-results">No results found for "{{ query }}"</div>
+        {% endif %}
+    </div>
+
+    <script>
+    (function() {
+        var form = document.getElementById('search-form');
+
+        // Source filter: sync checkboxes to hidden input
+        window.updateSourceInput = function() {
+            var checkboxes = form.querySelectorAll('input[type="checkbox"][value]');
+            var allCheckboxes = [];
+            var checked = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].type === 'checkbox') {
+                    allCheckboxes.push(checkboxes[i]);
+                    if (checkboxes[i].checked) checked.push(checkboxes[i].value);
+                }
+            }
+            var hidden = document.getElementById('source-hidden');
+            if (hidden) {
+                if (checked.length === allCheckboxes.length) {
+                    hidden.value = '';
+                } else {
+                    hidden.value = checked.join(',');
+                }
+            }
+        };
+
+        // Weight slider sync
+        window.syncWeightSlider = function(name, value) {
+            var display = document.getElementById('display_w_' + name);
+            var hidden = document.getElementById('w_' + name);
+            var rounded = parseFloat(value).toFixed(1);
+            if (display) display.textContent = rounded;
+            if (hidden) hidden.value = rounded;
+        };
+
+        window.resetWeight = function(name, defaultVal) {
+            var slider = document.getElementById('slider_w_' + name);
+            var display = document.getElementById('display_w_' + name);
+            var hidden = document.getElementById('w_' + name);
+            var val = parseFloat(defaultVal).toFixed(1);
+            if (slider) slider.value = val;
+            if (display) display.textContent = val;
+            if (hidden) hidden.value = val;
+        };
+
+        // Strip empty params from URL on form submit
+        form.addEventListener('submit', function() {
+            // Remove checkbox inputs so only hidden input is submitted
+            var checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].removeAttribute('name');
+            }
+            updateSourceInput();
+
+            // Strip weight params that equal their defaults
+            var sliders = form.querySelectorAll('.weight-slider-row input[type="range"]');
+            for (var i = 0; i < sliders.length; i++) {
+                var slider = sliders[i];
+                var hiddenId = slider.id.replace('slider_', '');
+                var hidden = document.getElementById(hiddenId);
+                if (hidden && parseFloat(hidden.value).toFixed(1) === parseFloat(slider.getAttribute('data-default')).toFixed(1)) {
+                    hidden.removeAttribute('name');
+                }
+            }
+
+            var elements = form.querySelectorAll('input[name], select[name]');
+            for (var i = 0; i < elements.length; i++) {
+                var el = elements[i];
+                if (el.name !== 'q' && !el.value.trim()) {
+                    el.removeAttribute('name');
+                }
+            }
+        });
+
+        // Tag autocomplete via datalist
+        var tagFields = ['categories_tags', 'food_groups_tags', 'pnns_groups_1_tags', 'pnns_groups_2_tags', 'labels_tags'];
+        var debounceTimers = {};
+
+        function fetchTags(field, input, datalist) {
+            var val = input.value;
+            var parts = val.split(',');
+            var current = parts[parts.length - 1].trim();
+            var prefix = parts.slice(0, -1).map(function(p) { return p.trim(); }).filter(Boolean);
+            var url = '/api/tags/' + field + '?limit=20';
+            if (current) {
+                url += '&prefix=' + encodeURIComponent(current);
+            }
+            fetch(url)
+                .then(function(r) { return r.json(); })
+                .then(function(tags) {
+                    datalist.innerHTML = '';
+                    tags.forEach(function(tag) {
+                        var opt = document.createElement('option');
+                        var fullVal = prefix.length > 0 ? prefix.join(', ') + ', ' + tag : tag;
+                        opt.value = fullVal;
+                        datalist.appendChild(opt);
+                    });
+                })
+                .catch(function() {});
+        }
+
+        tagFields.forEach(function(field) {
+            var input = form.querySelector('input[name="' + field + '"]');
+            var datalist = document.getElementById('dl-' + field);
+            if (!input || !datalist) return;
+
+            input.addEventListener('focus', function() {
+                if (!datalist.children.length) {
+                    fetchTags(field, input, datalist);
+                }
+            });
+
+            input.addEventListener('input', function() {
+                clearTimeout(debounceTimers[field]);
+                debounceTimers[field] = setTimeout(function() {
+                    fetchTags(field, input, datalist);
+                }, 300);
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

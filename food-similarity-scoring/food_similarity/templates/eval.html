@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Evaluation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 0.25rem;
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        .page-description {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.75rem;
+        }
+        .nav-bar a {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-bar a:hover { background: #eee; color: #333; }
+        .nav-bar a.active { background: #3498db; color: white; }
+
+        /* Sub-tabs */
+        .sub-tab-bar {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .sub-tab-bar a {
+            padding: 0.35rem 0.9rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #666;
+            transition: background 0.2s, color 0.2s;
+        }
+        .sub-tab-bar a:hover { background: #eee; color: #333; }
+        .sub-tab-bar a.active { background: #27ae60; color: white; }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #fff;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #888;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+        }
+        .stats-bar .stat-item strong { color: #333; }
+        .stats-bar .change-user {
+            font-size: 0.75rem;
+            color: #3498db;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-left: 0.15rem;
+        }
+        .stats-bar .change-user:hover { color: #2980b9; }
+
+        /* Username modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .modal-box h2 { margin-bottom: 0.75rem; font-size: 1.2rem; color: #2c3e50; }
+        .modal-box p { margin-bottom: 1rem; font-size: 0.9rem; color: #666; line-height: 1.5; }
+        .modal-box input {
+            width: 100%;
+            padding: 0.6rem 0.8rem;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+            margin-bottom: 1rem;
+        }
+        .modal-box input:focus { border-color: #3498db; }
+        .modal-box button {
+            width: 100%;
+            padding: 0.6rem;
+            font-size: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .modal-box button:hover { background: #2980b9; }
+
+        /* Food card */
+        .food-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            flex: 1;
+            min-width: 0;
+        }
+        .food-card h3 {
+            font-size: 1rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+        .food-card .card-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #999;
+            margin-bottom: 0.15rem;
+        }
+        .food-card .card-section { margin-bottom: 0.6rem; }
+        .macro-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.3rem;
+        }
+        .macro-cell {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.78rem;
+        }
+        .macro-cell .macro-label { color: #888; }
+        .macro-cell .macro-value { font-weight: 600; color: #333; }
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .tag {
+            background: #e8f4fd;
+            color: #2980b9;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+        .tag.group-tag {
+            background: #eafaf1;
+            color: #27ae60;
+        }
+
+        /* Pair layout */
+        .eval-pair {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 640px) {
+            .eval-pair { flex-direction: column; }
+        }
+        .pair-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #aaa;
+            font-weight: 600;
+            min-width: 40px;
+        }
+
+        /* Task description */
+        .eval-prompt {
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.35rem;
+        }
+        .eval-hint {
+            text-align: center;
+            font-size: 0.82rem;
+            color: #999;
+            margin-bottom: 1rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.6rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-yes {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-yes:hover:not(:disabled) { background: #219a52; }
+        .btn-no {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-no:hover:not(:disabled) { background: #c0392b; }
+        .btn-submit {
+            background: #3498db;
+            color: white;
+            padding: 0.6rem 2rem;
+        }
+        .btn-submit:hover:not(:disabled) { background: #2980b9; }
+        .btn-skip {
+            background: #eee;
+            color: #888;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+        }
+        .btn-skip:hover:not(:disabled) { background: #ddd; color: #555; }
+
+        /* Likert scale */
+        .likert-scale {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
+            align-items: stretch;
+            margin-bottom: 1rem;
+        }
+        .likert-label {
+            font-size: 0.75rem;
+            color: #999;
+            max-width: 80px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+        }
+        .likert-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+        }
+        .likert-option .likert-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background: white;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .likert-option:hover .likert-btn {
+            border-color: #3498db;
+            color: #3498db;
+            transform: scale(1.1);
+        }
+        .likert-option.selected .likert-btn {
+            background: #3498db;
+            border-color: #3498db;
+            color: white;
+            transform: scale(1.1);
+        }
+        .likert-option .likert-sublabel {
+            font-size: 0.65rem;
+            color: #bbb;
+            text-align: center;
+            max-width: 60px;
+        }
+        .likert-option.selected .likert-sublabel { color: #3498db; }
+
+        /* Candidate grid */
+        .candidate-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 640px) {
+            .candidate-grid { grid-template-columns: 1fr; }
+        }
+        .candidate-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .candidate-card:hover { border-color: #3498db; box-shadow: 0 2px 8px rgba(52,152,219,0.15); }
+        .candidate-card.selected { border-color: #3498db; background: #f0f8ff; }
+        .candidate-card h3 {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            margin-bottom: 0.4rem;
+            word-wrap: break-word;
+        }
+
+        /* Good swaps: wider grid for more candidates */
+        .candidate-grid-wide {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        @media (min-width: 900px) {
+            .candidate-grid-wide { grid-template-columns: 1fr 1fr 1fr; }
+        }
+        @media (max-width: 640px) {
+            .candidate-grid-wide { grid-template-columns: 1fr; }
+        }
+
+        /* Flash message */
+        .flash {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            background: #27ae60;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 200;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+        .flash.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Query label banner */
+        .query-banner {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+        .reloaded-banner {
+            background: #eef6ff;
+            border: 1px solid #b3d4fc;
+            color: #31587a;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reloaded-banner button {
+            background: none;
+            border: none;
+            color: #31587a;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" data-active-tab="{{ active_tab }}">
+        <nav class="nav-bar">
+            <a href="/">Search</a>
+            <a href="/similarity">Similarity</a>
+            <a href="/mapping">Mapping</a>
+            <a href="/personalized">Personalized</a>
+            <a href="/eval" class="active">Eval</a>
+        </nav>
+        {% if resources_reloaded %}
+        <div class="reloaded-banner">
+            <span>The server was idle and reloaded its models — this page load was slower than usual.</span>
+            <button onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        </div>
+        {% endif %}
+
+        <h1>Food Similarity Evaluation</h1>
+        <p class="page-description">Help us improve our food recommendation system by answering quick questions about how similar different foods are. Each tab has a different type of question.</p>
+
+        <nav class="sub-tab-bar">
+            <a href="/eval/binary" class="{% if active_tab == 'binary' %}active{% endif %}">Yes / No</a>
+            <a href="/eval/bestswap" class="{% if active_tab == 'bestswap' %}active{% endif %}">Pick Best</a>
+            <a href="/eval/goodswaps" class="{% if active_tab == 'goodswaps' %}active{% endif %}">Pick All Good</a>
+            <a href="/eval/likert" class="{% if active_tab == 'likert' %}active{% endif %}">Rate Similarity</a>
+        </nav>
+
+        <div class="stats-bar" id="stats-bar">
+            <span class="stat-item">Yes/No: <strong id="stat-binary">0</strong></span>
+            <span class="stat-item">Best: <strong id="stat-bestswap">0</strong></span>
+            <span class="stat-item">All Good: <strong id="stat-goodswaps">0</strong></span>
+            <span class="stat-item">Rating: <strong id="stat-likert">0</strong></span>
+            <span class="stat-item" style="color:#ddd;">|</span>
+            <span class="stat-item">User: <strong id="stat-user">--</strong><span class="change-user" id="change-user-btn" title="Change your name">(change)</span></span>
+        </div>
+
+        <!-- Binary tab -->
+        <div id="tab-binary" style="display:{% if active_tab == 'binary' %}block{% else %}none{% endif %}">
+            <div id="binary-content"><div class="loading">Loading...</div></div>
+        </div>
+
+        <!-- Best Swap tab -->
+        <div id="tab-bestswap" style="display:{% if active_tab == 'bestswap' %}block{% else %}none{% endif %}">
+            <div id="bestswap-content"><div class="loading">Loading...</div></div>
+        </div>
+
+        <!-- Good Swaps tab -->
+        <div id="tab-goodswaps" style="display:{% if active_tab == 'goodswaps' %}block{% else %}none{% endif %}">
+            <div id="goodswaps-content"><div class="loading">Loading...</div></div>
+        </div>
+
+        <!-- Likert tab -->
+        <div id="tab-likert" style="display:{% if active_tab == 'likert' %}block{% else %}none{% endif %}">
+            <div id="likert-content"><div class="loading">Loading...</div></div>
+        </div>
+    </div>
+
+    <!-- Username modal -->
+    <div class="modal-overlay" id="username-modal" style="display:none">
+        <div class="modal-box">
+            <h2 id="modal-title">Welcome!</h2>
+            <p id="modal-description">Before you start, please enter your name so we can keep track of your answers. You can change this later.</p>
+            <input type="text" id="username-input" placeholder="Your name" autocomplete="off">
+            <button id="username-submit">Start Evaluating</button>
+        </div>
+    </div>
+
+    <!-- Flash message -->
+    <div class="flash" id="flash-msg">Recorded!</div>
+
+    <script>
+    (function() {
+        const ACTIVE_TAB = document.querySelector('.container').dataset.activeTab;
+        let sessionId = null;
+        let submitting = false;
+
+        // ---------------------------------------------------------------
+        // Helpers
+        // ---------------------------------------------------------------
+
+        function getCookie(name) {
+            const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+            return m ? decodeURIComponent(m[1]) : null;
+        }
+
+        function setCookie(name, val, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + days * 86400000);
+            document.cookie = name + '=' + encodeURIComponent(val) + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
+        }
+
+        function getBrowserCookie() {
+            let c = getCookie('eval_browser_id');
+            if (!c) {
+                c = crypto.randomUUID();
+                setCookie('eval_browser_id', c, 365);
+            }
+            return c;
+        }
+
+        function flash(msg, color) {
+            const el = document.getElementById('flash-msg');
+            el.textContent = msg || 'Recorded!';
+            el.style.background = color || '#27ae60';
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
+        const MACRO_LABELS = {
+            energy_kcal_100g: 'Energy',
+            fat_100g: 'Fat',
+            carbohydrates_100g: 'Carbs',
+            proteins_100g: 'Protein',
+            sugars_100g: 'Sugars',
+            fiber_100g: 'Fiber',
+            salt_100g: 'Salt',
+            saturated_fat_100g: 'Sat. fat',
+        };
+        const MACRO_UNITS = {
+            energy_kcal_100g: 'kcal',
+            fat_100g: 'g', carbohydrates_100g: 'g', proteins_100g: 'g',
+            sugars_100g: 'g', fiber_100g: 'g', salt_100g: 'g', saturated_fat_100g: 'g',
+        };
+
+        function renderFoodCard(food) {
+            let html = '<div class="food-card">';
+            html += '<h3>' + esc(food.name) + '</h3>';
+            const macros = food.macros || {};
+            const macroEntries = Object.entries(macros).filter(([,v]) => v != null);
+            if (macroEntries.length) {
+                html += '<div class="card-section"><div class="card-label">Nutrition (per 100 g)</div><div class="macro-grid">';
+                for (const [key, val] of macroEntries) {
+                    html += '<div class="macro-cell"><span class="macro-label">' + esc(MACRO_LABELS[key] || key) + '</span> ';
+                    html += '<span class="macro-value">' + round(val) + (MACRO_UNITS[key] || '') + '</span></div>';
+                }
+                html += '</div></div>';
+            }
+            const cats = food.categories || [];
+            if (cats.length) {
+                html += '<div class="card-section"><div class="card-label">Categories</div><div class="tag-list">';
+                for (const c of cats) html += '<span class="tag">' + esc(c) + '</span>';
+                html += '</div></div>';
+            }
+            const groups = food.food_groups || [];
+            if (groups.length) {
+                html += '<div class="card-section"><div class="card-label">Food Groups</div><div class="tag-list">';
+                for (const g of groups) html += '<span class="tag group-tag">' + esc(g) + '</span>';
+                html += '</div></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderCandidateCard(food, idx) {
+            let html = '<div class="candidate-card" data-food-id="' + food.food_id + '" data-idx="' + idx + '">';
+            html += '<h3>' + esc(food.name) + '</h3>';
+            const macros = food.macros || {};
+            const macroEntries = Object.entries(macros).filter(([,v]) => v != null);
+            if (macroEntries.length) {
+                html += '<div class="card-section"><div class="card-label">Nutrition (per 100 g)</div><div class="macro-grid">';
+                for (const [key, val] of macroEntries) {
+                    html += '<div class="macro-cell"><span class="macro-label">' + esc(MACRO_LABELS[key] || key) + '</span> ';
+                    html += '<span class="macro-value">' + round(val) + (MACRO_UNITS[key] || '') + '</span></div>';
+                }
+                html += '</div></div>';
+            }
+            const cats = food.categories || [];
+            if (cats.length) {
+                html += '<div class="card-section"><div class="card-label">Categories</div><div class="tag-list">';
+                for (const c of cats) html += '<span class="tag">' + esc(c) + '</span>';
+                html += '</div></div>';
+            }
+            const groups = food.food_groups || [];
+            if (groups.length) {
+                html += '<div class="card-section"><div class="card-label">Food Groups</div><div class="tag-list">';
+                for (const g of groups) html += '<span class="tag group-tag">' + esc(g) + '</span>';
+                html += '</div></div>';
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function esc(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function round(v) {
+            if (v == null) return '\u2014';
+            return Number(v).toFixed(1);
+        }
+
+        // ---------------------------------------------------------------
+        // Session & username
+        // ---------------------------------------------------------------
+
+        function showUsernameModal(isChange) {
+            const modal = document.getElementById('username-modal');
+            const titleEl = document.getElementById('modal-title');
+            const descEl = document.getElementById('modal-description');
+            const input = document.getElementById('username-input');
+            const btn = document.getElementById('username-submit');
+            if (isChange) {
+                titleEl.textContent = 'Change Your Name';
+                descEl.textContent = 'Enter a new name. Your previous answers will be kept.';
+                btn.textContent = 'Update Name';
+                input.value = localStorage.getItem('eval_username') || '';
+            } else {
+                titleEl.textContent = 'Welcome!';
+                descEl.textContent = 'Before you start, please enter your name so we can keep track of your answers. You can change this later.';
+                btn.textContent = 'Start Evaluating';
+                input.value = '';
+            }
+            modal.style.display = 'flex';
+            input.focus();
+        }
+
+        async function initSession() {
+            const username = localStorage.getItem('eval_username');
+            if (!username) {
+                showUsernameModal(false);
+                return;
+            }
+            document.getElementById('stat-user').textContent = username;
+            const cookie = getBrowserCookie();
+            try {
+                const resp = await fetch('/api/eval/session', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, browser_cookie: cookie}),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || 'Server error ' + resp.status);
+                }
+                const data = await resp.json();
+                sessionId = data.session_id;
+                await updateStats();
+                loadActiveTab();
+            } catch (e) {
+                console.error('Session init failed:', e);
+                flash('Evaluation system unavailable \u2014 try refreshing later', '#e74c3c');
+            }
+        }
+
+        document.getElementById('username-submit').addEventListener('click', () => {
+            const input = document.getElementById('username-input');
+            const name = input.value.trim();
+            if (!name) { input.focus(); return; }
+            localStorage.setItem('eval_username', name);
+            document.getElementById('username-modal').style.display = 'none';
+            initSession();
+        });
+
+        document.getElementById('username-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('username-submit').click();
+        });
+
+        document.getElementById('change-user-btn').addEventListener('click', () => {
+            showUsernameModal(true);
+        });
+
+        async function updateStats() {
+            if (!sessionId) return;
+            try {
+                const resp = await fetch('/api/eval/stats?session_id=' + sessionId);
+                const data = await resp.json();
+                document.getElementById('stat-binary').textContent = data.binary_count;
+                document.getElementById('stat-bestswap').textContent = data.bestswap_count;
+                document.getElementById('stat-goodswaps').textContent = data.goodswaps_count;
+                document.getElementById('stat-likert').textContent = data.likert_count;
+            } catch(e) { /* ignore */ }
+        }
+
+        function loadActiveTab() {
+            if (ACTIVE_TAB === 'binary') loadBinarySample();
+            else if (ACTIVE_TAB === 'bestswap') loadBestSwapSample();
+            else if (ACTIVE_TAB === 'goodswaps') loadGoodSwapsSample();
+            else if (ACTIVE_TAB === 'likert') loadLikertSample();
+        }
+
+        // ---------------------------------------------------------------
+        // Binary
+        // ---------------------------------------------------------------
+
+        let binaryData = null;
+
+        async function loadBinarySample() {
+            const el = document.getElementById('binary-content');
+            el.innerHTML = '<div class="loading">Loading next pair...</div>';
+            try {
+                const resp = await fetch('/api/eval/sample/binary');
+                binaryData = await resp.json();
+                renderBinary();
+            } catch(e) {
+                el.innerHTML = '<div class="loading">Failed to load. <button onclick="loadBinarySample()">Retry</button></div>';
+            }
+        }
+
+        function renderBinary() {
+            const d = binaryData;
+            let html = '<div class="eval-prompt">Could you swap the left food for the right one in a meal?</div>';
+            html += '<div class="eval-hint">Imagine someone is eating the food on the left. Would the food on the right be a reasonable replacement with similar taste, texture, or nutritional value?</div>';
+            html += '<div class="eval-pair">';
+            html += '<div style="flex:1"><div class="query-banner">Original Food</div>' + renderFoodCard(d.query) + '</div>';
+            html += '<div class="pair-divider">vs</div>';
+            html += '<div style="flex:1"><div class="query-banner">Possible Replacement</div>' + renderFoodCard(d.candidate) + '</div>';
+            html += '</div>';
+            html += '<div class="action-buttons">';
+            html += '<button class="btn btn-yes" id="btn-binary-yes">Yes, good swap</button>';
+            html += '<button class="btn btn-no" id="btn-binary-no">No, too different</button>';
+            html += '<button class="btn btn-skip" id="btn-binary-skip">Skip</button>';
+            html += '</div>';
+            document.getElementById('binary-content').innerHTML = html;
+
+            document.getElementById('btn-binary-yes').addEventListener('click', () => submitBinary('yes'));
+            document.getElementById('btn-binary-no').addEventListener('click', () => submitBinary('no'));
+            document.getElementById('btn-binary-skip').addEventListener('click', () => loadBinarySample());
+        }
+
+        async function submitBinary(response) {
+            if (!sessionId || !binaryData || submitting) return;
+            submitting = true;
+            document.querySelectorAll('#binary-content .btn').forEach(b => b.disabled = true);
+            try {
+                const resp = await fetch('/api/eval/rate/binary', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        query_food_id: binaryData.query.food_id,
+                        candidate_food_id: binaryData.candidate.food_id,
+                        candidate_rank: binaryData.candidate_rank,
+                        response: response,
+                        similarity_score: binaryData.similarity_score,
+                    }),
+                });
+                if (!resp.ok) throw new Error('Server error ' + resp.status);
+                flash('Recorded!', response === 'yes' ? '#27ae60' : '#e74c3c');
+                updateStats();
+                loadBinarySample();
+            } catch(e) {
+                flash('Error saving \u2014 try again', '#e74c3c');
+                document.querySelectorAll('#binary-content .btn').forEach(b => b.disabled = false);
+            } finally {
+                submitting = false;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Best Swap
+        // ---------------------------------------------------------------
+
+        let bestswapData = null;
+        let bestswapChosen = null;
+
+        async function loadBestSwapSample() {
+            const el = document.getElementById('bestswap-content');
+            el.innerHTML = '<div class="loading">Loading next set...</div>';
+            bestswapChosen = null;
+            try {
+                const resp = await fetch('/api/eval/sample/bestswap');
+                bestswapData = await resp.json();
+                renderBestSwap();
+            } catch(e) {
+                el.innerHTML = '<div class="loading">Failed to load. <button onclick="loadBestSwapSample()">Retry</button></div>';
+            }
+        }
+
+        function renderBestSwap() {
+            const d = bestswapData;
+            let html = '<div class="eval-prompt">Which of these 4 foods is the single best replacement?</div>';
+            html += '<div class="eval-hint">Look at the original food below, then click the one option you think is the closest match in terms of taste, use, or nutrition.</div>';
+            html += '<div style="margin-bottom:1rem"><div class="query-banner">Original Food</div>' + renderFoodCard(d.query) + '</div>';
+            html += '<div class="query-banner">Options (click one)</div>';
+            html += '<div class="candidate-grid">';
+            d.candidates.forEach((c, i) => { html += renderCandidateCard(c, i); });
+            html += '</div>';
+            html += '<div class="action-buttons">';
+            html += '<button class="btn btn-submit" id="btn-bestswap-submit" disabled>Submit Choice</button>';
+            html += '<button class="btn btn-skip" id="btn-bestswap-skip">Skip</button>';
+            html += '</div>';
+
+            document.getElementById('bestswap-content').innerHTML = html;
+
+            document.querySelectorAll('#tab-bestswap .candidate-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('#tab-bestswap .candidate-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    bestswapChosen = parseInt(card.dataset.foodId);
+                    document.getElementById('btn-bestswap-submit').disabled = false;
+                });
+            });
+
+            document.getElementById('btn-bestswap-submit').addEventListener('click', submitBestSwap);
+            document.getElementById('btn-bestswap-skip').addEventListener('click', () => loadBestSwapSample());
+        }
+
+        async function submitBestSwap() {
+            if (!sessionId || !bestswapData || bestswapChosen == null || submitting) return;
+            submitting = true;
+            document.querySelectorAll('#bestswap-content .btn').forEach(b => b.disabled = true);
+            document.querySelectorAll('#tab-bestswap .candidate-card').forEach(c => c.style.pointerEvents = 'none');
+            try {
+                const resp = await fetch('/api/eval/rate/bestswap', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        query_food_id: bestswapData.query.food_id,
+                        candidate_food_ids: bestswapData.candidates.map(c => c.food_id),
+                        chosen_food_id: bestswapChosen,
+                        candidate_ranks: bestswapData.candidates.map(c => c.rank),
+                    }),
+                });
+                if (!resp.ok) throw new Error('Server error ' + resp.status);
+                flash('Recorded!');
+                updateStats();
+                loadBestSwapSample();
+            } catch(e) {
+                flash('Error saving \u2014 try again', '#e74c3c');
+                document.querySelectorAll('#bestswap-content .btn').forEach(b => b.disabled = false);
+                document.querySelectorAll('#tab-bestswap .candidate-card').forEach(c => c.style.pointerEvents = '');
+            } finally {
+                submitting = false;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Good Swaps (multi-select)
+        // ---------------------------------------------------------------
+
+        let goodswapsData = null;
+        let goodswapsChosen = new Set();
+
+        async function loadGoodSwapsSample() {
+            const el = document.getElementById('goodswaps-content');
+            el.innerHTML = '<div class="loading">Loading next set...</div>';
+            goodswapsChosen = new Set();
+            try {
+                const resp = await fetch('/api/eval/sample/goodswaps');
+                goodswapsData = await resp.json();
+                renderGoodSwaps();
+            } catch(e) {
+                el.innerHTML = '<div class="loading">Failed to load. <button onclick="loadGoodSwapsSample()">Retry</button></div>';
+            }
+        }
+
+        function renderGoodSwaps() {
+            const d = goodswapsData;
+            let html = '<div class="eval-prompt">Which of these foods would be acceptable replacements?</div>';
+            html += '<div class="eval-hint">Click <strong>all</strong> the foods below that you think could reasonably replace the original. You can select any number \u2014 from none to all of them. Then click Submit.</div>';
+            html += '<div style="margin-bottom:1rem"><div class="query-banner">Original Food</div>' + renderFoodCard(d.query) + '</div>';
+            html += '<div class="query-banner">Click all that would be good swaps</div>';
+            html += '<div class="candidate-grid-wide">';
+            d.candidates.forEach((c, i) => { html += renderCandidateCard(c, i); });
+            html += '</div>';
+            html += '<div class="action-buttons">';
+            html += '<button class="btn btn-submit" id="btn-goodswaps-submit">Submit (<span id="goodswaps-count">0</span> selected)</button>';
+            html += '<button class="btn btn-skip" id="btn-goodswaps-skip">Skip</button>';
+            html += '</div>';
+
+            document.getElementById('goodswaps-content').innerHTML = html;
+
+            document.querySelectorAll('#tab-goodswaps .candidate-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const fid = parseInt(card.dataset.foodId);
+                    if (goodswapsChosen.has(fid)) {
+                        goodswapsChosen.delete(fid);
+                        card.classList.remove('selected');
+                    } else {
+                        goodswapsChosen.add(fid);
+                        card.classList.add('selected');
+                    }
+                    document.getElementById('goodswaps-count').textContent = goodswapsChosen.size;
+                });
+            });
+
+            document.getElementById('btn-goodswaps-submit').addEventListener('click', submitGoodSwaps);
+            document.getElementById('btn-goodswaps-skip').addEventListener('click', () => loadGoodSwapsSample());
+        }
+
+        async function submitGoodSwaps() {
+            if (!sessionId || !goodswapsData || submitting) return;
+            submitting = true;
+            document.querySelectorAll('#goodswaps-content .btn').forEach(b => b.disabled = true);
+            document.querySelectorAll('#tab-goodswaps .candidate-card').forEach(c => c.style.pointerEvents = 'none');
+            try {
+                const resp = await fetch('/api/eval/rate/goodswaps', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        query_food_id: goodswapsData.query.food_id,
+                        candidate_food_ids: goodswapsData.candidates.map(c => c.food_id),
+                        chosen_food_ids: Array.from(goodswapsChosen),
+                        candidate_ranks: goodswapsData.candidates.map(c => c.rank),
+                    }),
+                });
+                if (!resp.ok) throw new Error('Server error ' + resp.status);
+                const n = goodswapsChosen.size;
+                flash(n === 0 ? 'Recorded \u2014 none selected' : 'Recorded \u2014 ' + n + ' selected');
+                updateStats();
+                loadGoodSwapsSample();
+            } catch(e) {
+                flash('Error saving \u2014 try again', '#e74c3c');
+                document.querySelectorAll('#goodswaps-content .btn').forEach(b => b.disabled = false);
+                document.querySelectorAll('#tab-goodswaps .candidate-card').forEach(c => c.style.pointerEvents = '');
+            } finally {
+                submitting = false;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Likert
+        // ---------------------------------------------------------------
+
+        let likertData = null;
+        let likertSelected = null;
+
+        async function loadLikertSample() {
+            const el = document.getElementById('likert-content');
+            el.innerHTML = '<div class="loading">Loading next pair...</div>';
+            likertSelected = null;
+            try {
+                const resp = await fetch('/api/eval/sample/likert');
+                likertData = await resp.json();
+                renderLikert();
+            } catch(e) {
+                el.innerHTML = '<div class="loading">Failed to load. <button onclick="loadLikertSample()">Retry</button></div>';
+            }
+        }
+
+        const LIKERT_LABELS = ['Not at all\nsimilar', 'Slightly\nsimilar', 'Somewhat\nsimilar', 'Very\nsimilar', 'Almost\nidentical'];
+
+        function renderLikert() {
+            const d = likertData;
+            let html = '<div class="eval-prompt">How similar are these two foods?</div>';
+            html += '<div class="eval-hint">Think about whether they taste similar, are used in similar meals, or have similar nutritional profiles. Then pick a rating and click Submit.</div>';
+            html += '<div class="eval-pair">';
+            html += '<div style="flex:1"><div class="query-banner">Food A</div>' + renderFoodCard(d.food_a) + '</div>';
+            html += '<div class="pair-divider">&amp;</div>';
+            html += '<div style="flex:1"><div class="query-banner">Food B</div>' + renderFoodCard(d.food_b) + '</div>';
+            html += '</div>';
+            html += '<div class="likert-scale">';
+            html += '<span class="likert-label">Very Different</span>';
+            for (let i = 1; i <= 5; i++) {
+                html += '<div class="likert-option" data-rating="' + i + '">';
+                html += '<button class="likert-btn">' + i + '</button>';
+                html += '<span class="likert-sublabel">' + esc(LIKERT_LABELS[i-1]) + '</span>';
+                html += '</div>';
+            }
+            html += '<span class="likert-label">Very Similar</span>';
+            html += '</div>';
+            html += '<div class="action-buttons">';
+            html += '<button class="btn btn-submit" id="btn-likert-submit" disabled>Submit Rating</button>';
+            html += '<button class="btn btn-skip" id="btn-likert-skip">Skip</button>';
+            html += '</div>';
+
+            document.getElementById('likert-content').innerHTML = html;
+
+            document.querySelectorAll('.likert-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('.likert-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    likertSelected = parseInt(opt.dataset.rating);
+                    document.getElementById('btn-likert-submit').disabled = false;
+                });
+            });
+
+            document.getElementById('btn-likert-submit').addEventListener('click', submitLikert);
+            document.getElementById('btn-likert-skip').addEventListener('click', () => loadLikertSample());
+        }
+
+        async function submitLikert() {
+            if (!sessionId || !likertData || likertSelected == null || submitting) return;
+            submitting = true;
+            document.querySelectorAll('#likert-content .btn, #likert-content .likert-btn').forEach(b => b.disabled = true);
+            const colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#27ae60'];
+            try {
+                const resp = await fetch('/api/eval/rate/likert', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        food_id_a: likertData.food_a.food_id,
+                        food_id_b: likertData.food_b.food_id,
+                        rating: likertSelected,
+                        similarity_bin: likertData.similarity_bin,
+                        similarity_score: likertData.similarity_score,
+                    }),
+                });
+                if (!resp.ok) throw new Error('Server error ' + resp.status);
+                flash('Rated ' + likertSelected + '/5', colors[likertSelected - 1]);
+                updateStats();
+                loadLikertSample();
+            } catch(e) {
+                flash('Error saving \u2014 try again', '#e74c3c');
+                document.querySelectorAll('#likert-content .btn, #likert-content .likert-btn').forEach(b => b.disabled = false);
+            } finally {
+                submitting = false;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // Make load functions globally accessible for retry buttons
+        // ---------------------------------------------------------------
+        window.loadBinarySample = loadBinarySample;
+        window.loadBestSwapSample = loadBestSwapSample;
+        window.loadGoodSwapsSample = loadGoodSwapsSample;
+        window.loadLikertSample = loadLikertSample;
+
+        // ---------------------------------------------------------------
+        // Init
+        // ---------------------------------------------------------------
+        initSession();
+    })();
+    </script>
+</body>
+</html>

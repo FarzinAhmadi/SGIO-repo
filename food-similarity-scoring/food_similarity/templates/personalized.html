@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personalized Food Search</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.75rem;
+        }
+        .nav-bar a {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #666;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-bar a:hover { background: #eee; color: #333; }
+        .nav-bar a.active { background: #3498db; color: white; }
+        h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            color: #2c3e50;
+        }
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .section-title {
+            font-size: 0.85rem;
+            color: #6c7a89;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* User selector */
+        .filter-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row select, .filter-row input {
+            padding: 0.45rem 0.65rem;
+            font-size: 0.85rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+        .filter-row button {
+            padding: 0.45rem 1rem;
+            font-size: 0.85rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .filter-row button:hover { background: #2980b9; }
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.88rem;
+        }
+        .user-row:last-child { border-bottom: none; }
+        .user-row:hover { background: #f8f9fa; }
+        .user-row.selected { background: #e8f4fd; border-left: 3px solid #3498db; }
+        .user-id { font-weight: 600; color: #2c3e50; min-width: 70px; }
+        .user-demo { color: #666; min-width: 90px; }
+        .user-diets { flex: 1; display: flex; gap: 0.25rem; flex-wrap: wrap; }
+        .user-foods { color: #999; font-size: 0.8rem; white-space: nowrap; }
+        .diet-badge {
+            display: inline-block;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #e8f8f5;
+            color: #1abc9c;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            font-size: 0.85rem;
+        }
+        .pagination button {
+            padding: 0.3rem 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .pagination button:disabled { opacity: 0.4; cursor: default; }
+        .pagination span { padding: 0.3rem 0.5rem; color: #666; }
+        .no-data { text-align: center; color: #999; padding: 1.5rem; font-size: 0.9rem; }
+
+        /* User profile */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.3rem 1rem;
+            font-size: 0.88rem;
+            margin-bottom: 0.75rem;
+        }
+        .profile-grid dt { font-weight: 600; color: #555; }
+        .profile-grid dd { color: #333; }
+        .meal-group {
+            margin-bottom: 0.5rem;
+        }
+        .meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+        }
+        .meal-header:hover { color: #3498db; }
+        .meal-btn {
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .meal-btn:hover { background: #219a52; }
+        .meal-items {
+            padding: 0.3rem 0 0.3rem 0.5rem;
+            font-size: 0.82rem;
+        }
+        .meal-items table { width: 100%; border-collapse: collapse; }
+        .meal-items th {
+            text-align: left;
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            padding: 0.2rem 0.4rem;
+        }
+        .meal-items td { padding: 0.2rem 0.4rem; color: #555; }
+
+        /* Meal builder */
+        .chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            min-height: 36px;
+            padding: 0.3rem 0;
+        }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            background: #e8f4fd;
+            border-radius: 16px;
+            font-size: 0.82rem;
+            color: #2980b9;
+        }
+        .chip .remove {
+            cursor: pointer;
+            font-weight: 700;
+            color: #c0392b;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+        .macro-summary {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            font-size: 0.82rem;
+            color: #666;
+            margin-top: 0.3rem;
+        }
+        .macro-summary span { font-weight: 600; color: #333; }
+        .add-food-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            position: relative;
+        }
+        .add-food-row input {
+            flex: 1;
+            padding: 0.45rem 0.65rem;
+            font-size: 0.85rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 60px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .autocomplete-list .ac-item {
+            padding: 0.4rem 0.65rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .autocomplete-list .ac-item:hover { background: #f0f0f0; }
+        .builder-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .btn-small {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+        .btn-small:hover { background: #f0f0f0; }
+
+        /* Search form */
+        .search-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .search-row input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+        .search-row input[type="text"]:focus { border-color: #3498db; }
+        .search-row button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .search-row button:hover { background: #2980b9; }
+        .btn-clear {
+            padding: 0.75rem 1.2rem;
+            font-size: 0.9rem;
+            background: #eee;
+            color: #666;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        .btn-clear:hover { background: #ddd; color: #333; }
+
+        /* Results */
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c00;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .result-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+        }
+        .result-rank { font-size: 0.85rem; font-weight: 600; color: #888; }
+        .result-name { font-size: 1.15rem; font-weight: 600; color: #2c3e50; }
+        .result-categories { margin-top: 0.4rem; font-size: 0.85rem; color: #888; }
+        .macro-grid {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+        .macro-cell {
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+            color: #555;
+        }
+        .result-scores {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: #999;
+        }
+        .score-badge {
+            background: #f0f0f0;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+        .final-score { font-weight: 600; background: #e8f4fd; color: #2980b9; }
+        .score-preference { background: #e8f8f5; color: #1abc9c; }
+        .score-meal_context { background: #fef9e7; color: #f39c12; }
+        .source-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .source-usda { background: #27ae60; color: white; }
+        .source-off { background: #3498db; color: white; }
+        .no-results { text-align: center; color: #999; padding: 2rem; }
+        .reloaded-banner {
+            background: #eef6ff;
+            border: 1px solid #b3d4fc;
+            color: #31587a;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.88rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .reloaded-banner button {
+            background: none;
+            border: none;
+            color: #31587a;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 0.25rem;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="nav-bar">
+            <a href="/">Search</a>
+            <a href="/similarity">Similarity</a>
+            <a href="/mapping">Mapping</a>
+            <a href="/personalized" class="active">Personalized</a>
+            <a href="/eval">Eval</a>
+        </nav>
+        {% if resources_reloaded %}
+        <div class="reloaded-banner">
+            <span>The server was idle and reloaded its models — this page load was slower than usual.</span>
+            <button onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+        </div>
+        {% endif %}
+        <h1>Personalized Food Search</h1>
+
+        {% if not nhanes_enabled %}
+        <div class="error">NHANES data is not enabled. Set nhanes.enabled = true in config.toml and ensure data files exist.</div>
+        {% else %}
+
+        <!-- Section 1: User Selector -->
+        <div class="section" id="user-selector">
+            <div class="section-title">1. Select a User Profile</div>
+            <div class="filter-row">
+                <select id="filter-gender">
+                    <option value="">Any Gender</option>
+                    <option value="1">Male</option>
+                    <option value="2">Female</option>
+                </select>
+                <input type="number" id="filter-min-age" placeholder="Min age" style="width:80px">
+                <input type="number" id="filter-max-age" placeholder="Max age" style="width:80px">
+                <select id="filter-diet">
+                    <option value="">Any Diet</option>
+                    {% for flag in diet_flag_names %}
+                    <option value="{{ flag }}">{{ flag | replace("_", " ") | title }}</option>
+                    {% endfor %}
+                </select>
+                <button onclick="loadUsers(1)">Filter</button>
+            </div>
+            <div class="user-list" id="user-list">
+                <div class="no-data">Click "Filter" to load users</div>
+            </div>
+            <div class="pagination" id="user-pagination" style="display:none">
+                <button id="prev-page" onclick="loadUsers(currentPage-1)" disabled>&laquo; Prev</button>
+                <span id="page-info"></span>
+                <button id="next-page" onclick="loadUsers(currentPage+1)" disabled>Next &raquo;</button>
+            </div>
+        </div>
+
+        <!-- Section 2: User Profile (shown after selection) -->
+        <div class="section" id="user-profile" style="display:none">
+            <div class="section-title">2. User Profile</div>
+            <dl class="profile-grid" id="profile-info"></dl>
+            <div id="profile-meals"></div>
+        </div>
+
+        <!-- Section 3: Meal Builder -->
+        <div class="section" id="meal-builder-section">
+            <div class="section-title">3. Current Meal</div>
+            <div class="chip-list" id="meal-chips">
+                {% for item in meal_items %}
+                <span class="chip" data-code="{{ item.food_code }}">
+                    {{ item.food_name }}
+                    <span class="remove" onclick="removeMealItem({{ item.food_code }})">&times;</span>
+                </span>
+                {% endfor %}
+            </div>
+            <div class="macro-summary" id="meal-macros"></div>
+            <div class="add-food-row">
+                <input type="text" id="add-food-input" placeholder="Search food to add..." autocomplete="off">
+                <div class="autocomplete-list" id="food-autocomplete"></div>
+            </div>
+            <div class="builder-actions">
+                <button class="btn-small" onclick="clearMeal()">Clear Meal</button>
+            </div>
+        </div>
+
+        <!-- Section 4: Search -->
+        <div class="section">
+            <div class="section-title">4. Search</div>
+            <form id="search-form" method="get" action="/personalized">
+                <input type="hidden" name="user_id" id="hidden-user-id" value="{{ inputs.user_id | default('', true) }}">
+                <input type="hidden" name="meal" id="hidden-meal" value="{{ inputs.meal | default('', true) }}">
+                <input type="hidden" name="source" id="hidden-source" value="{{ selected_sources | sort | join(',') }}">
+                <div style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 0.4rem;">Databases to search:</div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        {% for src in available_sources %}
+                        <label style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" class="source-cb" value="{{ src }}"
+                                {% if src in selected_sources %}checked{% endif %}>
+                            {{ src | upper }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="search-row">
+                    <input type="text" name="q" value="{{ query }}" placeholder="Enter a food name (e.g. yogurt, chicken breast)">
+                    <button type="submit">Search</button>
+                    <a href="/personalized" class="btn-clear">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if results %}
+            {% for r in results %}
+            <div class="result-card">
+                <div class="result-header">
+                    <span class="result-name">{{ r.product_name }}</span>
+                    <span>
+                        {% if r.source %}<span class="source-badge source-{{ r.source }}">{{ r.source | upper }}</span>{% endif %}
+                        <span class="result-rank">#{{ r.rank }}</span>
+                    </span>
+                </div>
+                {% if r.brands %}
+                <div style="color:#666; font-size:0.95rem;">{{ r.brands }}</div>
+                {% endif %}
+                {% if r.macros %}
+                {% set ns = namespace(has_macro=false) %}
+                {% for k, v in r.macros.items() %}{% if v is not none %}{% set ns.has_macro = true %}{% endif %}{% endfor %}
+                {% if ns.has_macro %}
+                <div class="macro-grid">
+                    {% for k, v in r.macros.items() %}
+                    {% if v is not none %}
+                    <span class="macro-cell">{{ k | replace("_100g", "") | replace("_", " ") }}: {{ v }}{% if k == "energy_kcal_100g" %} kcal{% else %}g{% endif %}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endif %}
+                {% if r.categories %}
+                <div class="result-categories">{{ r.categories | join(", ") }}</div>
+                {% endif %}
+                <div class="result-scores">
+                    {% for name, val in r.scores.items() %}
+                    <span class="score-badge {% if name == 'preference' %}score-preference{% elif name == 'meal_context' %}score-meal_context{% endif %}">{{ name }}: {{ "%.4f" | format(val) }}</span>
+                    {% endfor %}
+                    <span class="score-badge final-score">final: {{ r.final_score }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% elif query %}
+            <div class="no-results">No results found for "{{ query }}"</div>
+        {% endif %}
+
+        {% endif %}{# nhanes_enabled #}
+    </div>
+
+    <script>
+    (function() {
+        var currentPage = 1;
+        window.currentPage = currentPage;
+        var selectedUserId = document.getElementById('hidden-user-id').value || null;
+        var mealCodes = [];
+        var mealData = {};
+        var currentProfileData = null;
+
+        // Initialize meal codes from hidden input
+        var mealInput = document.getElementById('hidden-meal');
+        if (mealInput && mealInput.value) {
+            mealCodes = mealInput.value.split(',').map(Number).filter(Boolean);
+        }
+
+        // Initialize meal data from server-rendered state
+        var initialMealItems = {{ meal_items | tojson }};
+        initialMealItems.forEach(function(item) {
+            mealData[String(item.food_code)] = item;
+        });
+        renderMealMacros();
+
+        // Restore user profile if user_id is set
+        if (selectedUserId) {
+            loadUserProfile(parseInt(selectedUserId));
+        }
+
+        /* ----- Source filter ----- */
+        function syncSourceFilter() {
+            var checked = document.querySelectorAll('.source-cb:checked');
+            var sources = [];
+            for (var i = 0; i < checked.length; i++) {
+                sources.push(checked[i].value);
+            }
+            document.getElementById('hidden-source').value = sources.join(',');
+        }
+        var sourceCbs = document.querySelectorAll('.source-cb');
+        for (var i = 0; i < sourceCbs.length; i++) {
+            sourceCbs[i].addEventListener('change', syncSourceFilter);
+        }
+
+        /* ----- User list ----- */
+        window.loadUsers = function(page) {
+            if (page < 1) return;
+            currentPage = page;
+            window.currentPage = page;
+            var gender = document.getElementById('filter-gender').value;
+            var minAge = document.getElementById('filter-min-age').value;
+            var maxAge = document.getElementById('filter-max-age').value;
+            var diet = document.getElementById('filter-diet').value;
+            var params = new URLSearchParams();
+            params.set('page', page);
+            if (gender) params.set('gender', gender);
+            if (minAge) params.set('min_age', minAge);
+            if (maxAge) params.set('max_age', maxAge);
+            if (diet) params.set('diet', diet);
+
+            fetch('/api/users?' + params.toString())
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    var list = document.getElementById('user-list');
+                    if (!data.users.length) {
+                        list.innerHTML = '<div class="no-data">No users match the filters</div>';
+                        document.getElementById('user-pagination').style.display = 'none';
+                        return;
+                    }
+                    list.innerHTML = '';
+                    data.users.forEach(function(u) {
+                        var row = document.createElement('div');
+                        row.className = 'user-row' + (u.user_id == selectedUserId ? ' selected' : '');
+                        row.onclick = function() { selectUser(u.user_id); };
+
+                        var idSpan = document.createElement('span');
+                        idSpan.className = 'user-id';
+                        idSpan.textContent = '#' + u.user_id;
+                        row.appendChild(idSpan);
+
+                        var demoSpan = document.createElement('span');
+                        demoSpan.className = 'user-demo';
+                        demoSpan.textContent = u.gender_label + ', ' + u.age + 'y';
+                        row.appendChild(demoSpan);
+
+                        var dietsSpan = document.createElement('span');
+                        dietsSpan.className = 'user-diets';
+                        u.diet_flags.forEach(function(d) {
+                            var badge = document.createElement('span');
+                            badge.className = 'diet-badge';
+                            badge.textContent = d.replace(/_/g, ' ');
+                            dietsSpan.appendChild(badge);
+                        });
+                        row.appendChild(dietsSpan);
+
+                        var foodsSpan = document.createElement('span');
+                        foodsSpan.className = 'user-foods';
+                        foodsSpan.textContent = u.food_count + ' foods';
+                        row.appendChild(foodsSpan);
+
+                        list.appendChild(row);
+                    });
+                    var pag = document.getElementById('user-pagination');
+                    pag.style.display = 'flex';
+                    document.getElementById('page-info').textContent = 'Page ' + data.page + ' / ' + data.total_pages + ' (' + data.total + ' users)';
+                    document.getElementById('prev-page').disabled = (page <= 1);
+                    document.getElementById('next-page').disabled = (page >= data.total_pages);
+                });
+        };
+
+        window.selectUser = function(userId) {
+            selectedUserId = userId;
+            document.getElementById('hidden-user-id').value = userId;
+            var rows = document.querySelectorAll('.user-row');
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].classList.remove('selected');
+                var idEl = rows[i].querySelector('.user-id');
+                if (idEl && idEl.textContent === '#' + userId) {
+                    rows[i].classList.add('selected');
+                }
+            }
+            loadUserProfile(userId);
+        };
+
+        function loadUserProfile(userId) {
+            fetch('/api/users/' + userId)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    currentProfileData = data;
+                    var section = document.getElementById('user-profile');
+                    section.style.display = 'block';
+
+                    // Profile info
+                    var info = document.getElementById('profile-info');
+                    info.innerHTML = '';
+                    var fields = [
+                        ['ID', '#' + data.user_id],
+                        ['Gender', data.gender_label],
+                        ['Age', String(data.age)],
+                        ['Foods logged', String(data.food_count)]
+                    ];
+                    fields.forEach(function(pair) {
+                        var dt = document.createElement('dt');
+                        dt.textContent = pair[0];
+                        var dd = document.createElement('dd');
+                        dd.textContent = pair[1];
+                        info.appendChild(dt);
+                        info.appendChild(dd);
+                    });
+                    // Diet badges
+                    var dtDiets = document.createElement('dt');
+                    dtDiets.textContent = 'Diets';
+                    var ddDiets = document.createElement('dd');
+                    if (data.diet_flags.length) {
+                        data.diet_flags.forEach(function(d) {
+                            var badge = document.createElement('span');
+                            badge.className = 'diet-badge';
+                            badge.textContent = d.replace(/_/g, ' ');
+                            ddDiets.appendChild(badge);
+                            ddDiets.appendChild(document.createTextNode(' '));
+                        });
+                    } else {
+                        ddDiets.textContent = 'None';
+                    }
+                    info.appendChild(dtDiets);
+                    info.appendChild(ddDiets);
+
+                    // Meals
+                    var mealsDiv = document.getElementById('profile-meals');
+                    mealsDiv.innerHTML = '';
+                    var mealNames = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+                    mealNames.forEach(function(name) {
+                        var items = data.meals[name];
+                        if (!items || !items.length) return;
+
+                        var group = document.createElement('div');
+                        group.className = 'meal-group';
+
+                        var header = document.createElement('div');
+                        header.className = 'meal-header';
+                        var headerText = document.createElement('span');
+                        headerText.textContent = name + ' (' + items.length + ' items)';
+                        var btn = document.createElement('button');
+                        btn.className = 'meal-btn';
+                        btn.textContent = 'Use this meal';
+                        btn.onclick = function() { useMeal(name); };
+                        header.appendChild(headerText);
+                        header.appendChild(btn);
+                        group.appendChild(header);
+
+                        var tableWrap = document.createElement('div');
+                        tableWrap.className = 'meal-items';
+                        var table = document.createElement('table');
+                        var thead = document.createElement('tr');
+                        ['Food', 'Grams', 'Kcal'].forEach(function(h) {
+                            var th = document.createElement('th');
+                            th.textContent = h;
+                            thead.appendChild(th);
+                        });
+                        table.appendChild(thead);
+                        items.forEach(function(e) {
+                            var tr = document.createElement('tr');
+                            var tdName = document.createElement('td');
+                            tdName.textContent = e.food_name;
+                            var tdGrams = document.createElement('td');
+                            tdGrams.textContent = e.grams;
+                            var tdKcal = document.createElement('td');
+                            tdKcal.textContent = e.energy_kcal;
+                            tr.appendChild(tdName);
+                            tr.appendChild(tdGrams);
+                            tr.appendChild(tdKcal);
+                            table.appendChild(tr);
+                        });
+                        tableWrap.appendChild(table);
+                        group.appendChild(tableWrap);
+                        mealsDiv.appendChild(group);
+                    });
+                });
+        }
+
+        window.useMeal = function(mealName) {
+            if (!currentProfileData || !currentProfileData.meals[mealName]) return;
+            var items = currentProfileData.meals[mealName];
+            mealCodes = items.map(function(e) { return e.food_code; });
+            syncMealUI();
+        };
+
+        /* ----- Meal builder ----- */
+        function syncMealUI() {
+            document.getElementById('hidden-meal').value = mealCodes.join(',');
+            var chipsDiv = document.getElementById('meal-chips');
+            var macrosDiv = document.getElementById('meal-macros');
+            if (!mealCodes.length) {
+                chipsDiv.innerHTML = '<span style="color:#999;font-size:0.85rem;">No items yet</span>';
+                macrosDiv.innerHTML = '';
+                return;
+            }
+            // Fetch food data (names + macros) for all codes in one call
+            fetch('/api/foods/lookup?codes=' + mealCodes.join(','))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    mealData = data;
+                    renderMealChips();
+                    renderMealMacros();
+                });
+        }
+
+        function renderMealChips() {
+            var chipsDiv = document.getElementById('meal-chips');
+            chipsDiv.innerHTML = '';
+            mealCodes.forEach(function(fc) {
+                var info = mealData[String(fc)] || {};
+                var chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.setAttribute('data-code', fc);
+                chip.appendChild(document.createTextNode(
+                    (info.food_name || ('Food #' + fc)) + ' '
+                ));
+                var remove = document.createElement('span');
+                remove.className = 'remove';
+                remove.textContent = '\u00d7';
+                (function(code) {
+                    remove.onclick = function() { removeMealItem(code); };
+                })(fc);
+                chip.appendChild(remove);
+                chipsDiv.appendChild(chip);
+            });
+        }
+
+        function renderMealMacros() {
+            var macrosDiv = document.getElementById('meal-macros');
+            if (!mealCodes.length) {
+                macrosDiv.innerHTML = '';
+                return;
+            }
+            var totals = {energy_kcal: 0, protein: 0, fat: 0, carbs: 0};
+            mealCodes.forEach(function(fc) {
+                var info = mealData[String(fc)];
+                if (!info) return;
+                if (info.energy_kcal != null) totals.energy_kcal += info.energy_kcal;
+                if (info.protein != null) totals.protein += info.protein;
+                if (info.fat != null) totals.fat += info.fat;
+                if (info.carbs != null) totals.carbs += info.carbs;
+            });
+            macrosDiv.innerHTML =
+                '<span>' + mealCodes.length + ' items</span> &middot; ' +
+                'Energy: <span>' + totals.energy_kcal.toFixed(0) + ' kcal</span> &middot; ' +
+                'Protein: <span>' + totals.protein.toFixed(1) + 'g</span> &middot; ' +
+                'Fat: <span>' + totals.fat.toFixed(1) + 'g</span> &middot; ' +
+                'Carbs: <span>' + totals.carbs.toFixed(1) + 'g</span>' +
+                ' <span style="color:#999;font-size:0.75rem;">(per 100g portions)</span>';
+        }
+
+        window.removeMealItem = function(code) {
+            mealCodes = mealCodes.filter(function(c) { return c !== code; });
+            syncMealUI();
+        };
+
+        window.clearMeal = function() {
+            mealCodes = [];
+            mealData = {};
+            syncMealUI();
+        };
+
+        /* ----- Food autocomplete ----- */
+        var addInput = document.getElementById('add-food-input');
+        var acList = document.getElementById('food-autocomplete');
+        var debounceTimer = null;
+
+        if (addInput) {
+            addInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                var q = addInput.value.trim();
+                if (q.length < 2) { acList.style.display = 'none'; return; }
+                debounceTimer = setTimeout(function() {
+                    fetch('/api/foods/search?q=' + encodeURIComponent(q) + '&limit=15')
+                        .then(function(r) { return r.json(); })
+                        .then(function(items) {
+                            acList.innerHTML = '';
+                            if (!items.length) { acList.style.display = 'none'; return; }
+                            items.forEach(function(item) {
+                                var div = document.createElement('div');
+                                div.className = 'ac-item';
+                                div.textContent = item.food_name + ' (#' + item.food_code + ')';
+                                div.addEventListener('click', function() {
+                                    addMealItem(item.food_code, item.food_name);
+                                });
+                                acList.appendChild(div);
+                            });
+                            acList.style.display = 'block';
+                        });
+                }, 250);
+            });
+
+            addInput.addEventListener('blur', function() {
+                setTimeout(function() { acList.style.display = 'none'; }, 200);
+            });
+        }
+
+        window.addMealItem = function(code, name) {
+            if (mealCodes.indexOf(code) === -1) {
+                mealCodes.push(code);
+            }
+            document.getElementById('hidden-meal').value = mealCodes.join(',');
+            if (addInput) addInput.value = '';
+            acList.style.display = 'none';
+            syncMealUI();
+        };
+
+        /* ----- Form submit: strip empty params ----- */
+        var form = document.getElementById('search-form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                syncSourceFilter();
+                var els = form.querySelectorAll('input[name]');
+                for (var i = 0; i < els.length; i++) {
+                    if (els[i].name !== 'q' && !els[i].value.trim()) {
+                        els[i].removeAttribute('name');
+                    }
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>
